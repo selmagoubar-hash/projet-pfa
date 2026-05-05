@@ -1,4 +1,4 @@
-from django import forms
+﻿from django import forms
 from .models import Consultation, Ordonnance, LigneOrdonnance, Medicament
 from appointments.models import RendezVous
 
@@ -21,7 +21,6 @@ class ConsultationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Limiter les rendez-vous à ceux qui n'ont pas encore de consultation
         self.fields['rendezvous'].queryset = RendezVous.objects.filter(
             consultation__isnull=True
         )

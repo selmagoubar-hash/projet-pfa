@@ -1,0 +1,25 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Facture #{{ facture.pk }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h1 class="h4">Facture #{{ facture.pk }}</h1>
+            <p class="mb-1"><strong>Patient:</strong> {{ facture.patient }}</p>
+            <p class="mb-1"><strong>Montant:</strong> {{ facture.montant_total }} MAD</p>
+            <p><strong>Statut:</strong> {{ facture.get_statut_display }}</p>
+            <form method="post" action="{% url 'billing:payer' facture.pk %}" class="row g-2">
+                {% csrf_token %}
+                <div class="col-sm-4">
+                    <input class="form-control" name="montant" type="number" step="0.01" value="{{ facture.montant_total }}">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-success" type="submit">Enregistrer paiement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

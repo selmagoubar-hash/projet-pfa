@@ -1,0 +1,33 @@
+<!-- users/templates/users/signup.html -->
+{% extends 'base/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Inscription - Cabinet Médical{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Inscription Patient</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-check-circle me-2"></i>S'inscrire
+                        </button>
+                    </form>
+                    <hr>
+                    <p class="text-center mb-0">
+                        Déjà un compte ? 
+                        <a href="{% url 'users:login' %}">Connectez-vous</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="fr">
+<body>
+  <p>Bonjour {{ patient.first_name }},</p>
+  <p>Nous vous rappelons votre rendez-vous prévu le {{ rendezvous.date_heure|date:"d/m/Y à H:i" }} avec Dr. {{ medecin.last_name }}.</p>
+  <p>Motif : {{ rendezvous.motif|default:"Consultation médicale" }}</p>
+  <p>Cordialement,<br>Cabinet Médical</p>
+</body>
+</html>

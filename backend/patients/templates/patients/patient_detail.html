@@ -1,0 +1,175 @@
+<!-- patients/templates/patients/patient_detail.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Fiche patient - {{ patient.first_name }} {{ patient.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-user-circle me-2 text-primary"></i>
+            {{ patient.first_name }} {{ patient.last_name }}
+        </h1>
+        <div>
+            <a href="{% url 'patients:update' patient.id %}" class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Modifier
+            </a>
+            <a href="{% url 'consultations:create' %}" class="btn btn-success">
+                <i class="fas fa-stethoscope me-2"></i>Nouvelle consultation
+            </a>
+            <a href="{% url 'appointments:create' %}?patient={{ patient.id }}" class="btn btn-primary">
+                <i class="fas fa-calendar-plus me-2"></i>Prendre RDV
+            </a>
+            {% if user.role == 'admin' %}
+            <a href="{% url 'patients:delete' patient.id %}" class="btn btn-danger">
+                <i class="fas fa-trash me-2"></i>Supprimer
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informations personnelles -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-id-card me-2"></i>Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr><th>Nom complet</th><td>{{ patient.first_name }} {{ patient.last_name }}</td></tr>
+                        <tr><th>Date de naissance</th><td>{{ patient.date_of_birth|date:"d/m/Y" }}</td></tr>
+                        <tr><th>Âge</th><td>{{ patient.date_of_birth|timesince }} </td></tr>
+                        <tr><th>Téléphone</th><td>{{ patient.phone|default:"-" }}</td></tr>
+                        <tr><th>Adresse</th><td>{{ patient.address|default:"-"|linebreaks }}</td></tr>
+                        <tr><th>Date d'inscription</th><td>{{ patient.created_at|date:"d/m/Y" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dossier médical -->
+        <div class="col-md-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-notes-medical me-2"></i>Dossier médical</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Antécédents / Diagnostic principal</h6>
+                            <p>{{ patient.dossier.diagnostic|default:"Aucune information" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">Traitement en cours</h6>
+                            <p>{{ patient.dossier.traitement|default:"Aucun traitement" }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'patients:dossier_edit' patient.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-edit me-1"></i>Modifier le dossier médical
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="card shadow">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#consultations">
+                        <i class="fas fa-stethoscope me-1"></i>Consultations
+                        <span class="badge bg-secondary">{{ consultations|length }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#ordonnances">
+                        <i class="fas fa-prescription-bottle me-1"></i>Ordonnances
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#factures">
+                        <i class="fas fa-money-bill-wave me-1"></i>Factures
+                        <span class="badge bg-secondary">{{ factures|length }}</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#rendezvous">
+                        <i class="fas fa-calendar me-1"></i>Rendez-vous
+                        <span class="badge bg-secondary">{{ rendezvous|length }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- Consultations -->
+                <div class="tab-pane fade show active" id="consultations">
+                    {% if consultations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr><th>Date</th><th>Médecin</th><th>Diagnostic</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for consultation in consultations %}
+                                <tr>
+                                    <td>{{ consultation.date|date:"d/m/Y H:i" }}</td>
+                                    <td>Dr. {{ consultation.medecin.last_name }}</td>
+                                    <td>{{ consultation.diagnostic|truncatechars:50 }}</td>
+                                    <td><a href="{% url 'consultations:detail' consultation.id %}" class="btn btn-sm btn-info">Voir</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Aucune consultation enregistrée.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Factures -->
+                <div class="tab-pane fade" id="factures">
+                    {% if factures %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead><tr><th>N° Facture</th><th>Date</th><th>Montant</th><th>Statut</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                {% for facture in factures %}
+                                <tr>
+                                    <td>#{{ facture.id }}</td>
+                                    <td>{{ facture.date_emission|date:"d/m/Y" }}</td>
+                                    <td>{{ facture.montant_total }} FCFA</td>
+                                    <td><span class="badge bg-{% if facture.statut == 'payee' %}success{% else %}warning{% endif %}">{{ facture.get_statut_display }}</span></td>
+                                    <td><a href="#" class="btn btn-sm btn-info">Détails</a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Aucune facture.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Rendez-vous -->
+                <div class="tab-pane fade" id="rendezvous">
+                    {% if rendezvous %}
+                    <div class="list-group">
+                        {% for rdv in rendezvous %}
+                        <div class="list-group-item">📅 {{ rdv.date_heure|date:"d/m/Y H:i" }} - {{ rdv.get_statut_display }}</div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Aucun rendez-vous.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

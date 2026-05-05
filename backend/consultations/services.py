@@ -1,8 +1,8 @@
-from django.db.models import Count, Sum, Q
+from django.db.models import Count
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
-from .models import Consultation, Ordonnance, Medicament
-from appointments.models import RendezVous
+from .models import Consultation
 from billing.models import Facture
 
 
@@ -36,8 +36,8 @@ def get_statistiques_consultations(medecin_id=None, periode='mois'):
     # Statistiques
     stats = {
         'total_consultations': consultations.count(),
-        'consultations_par_jour': consultations.extra(
-            select={'jour': "DATE(date)"}
+        'consultations_par_jour': consultations.annotate(
+            jour=TruncDate('date')
         ).values('jour').annotate(count=Count('id')).order_by('-jour')[:30],
         'diagnostics_communs': consultations.values('diagnostic').annotate(
             count=Count('id')

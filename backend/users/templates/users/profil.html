@@ -1,0 +1,80 @@
+<!-- users/templates/users/profil.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Mon profil - Cabinet Médical{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-circle fa-5x text-primary mb-3"></i>
+                    <h4>{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">
+                        <span class="badge bg-secondary">
+                            {% if user.role == 'medecin' %}
+                                <i class="fas fa-stethoscope me-1"></i>Médecin
+                            {% elif user.role == 'secretaire' %}
+                                <i class="fas fa-user-tie me-1"></i>Secrétaire
+                            {% elif user.role == 'admin' %}
+                                <i class="fas fa-user-shield me-1"></i>Administrateur
+                            {% else %}
+                                <i class="fas fa-user me-1"></i>Patient
+                            {% endif %}
+                        </span>
+                    </p>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'users:profil_edit' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Modifier le profil
+                        </a>
+                        <a href="{% url 'users:change_password' %}" class="btn btn-outline-warning">
+                            <i class="fas fa-key me-2"></i>Changer le mot de passe
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations personnelles</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th width="200">Nom d'utilisateur</th>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nom complet</th>
+                            <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Téléphone</th>
+                            <td>{{ user.phone|default:"<span class='text-muted'>Non renseigné</span>" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Adresse</th>
+                            <td>{{ user.address|default:"<span class='text-muted'>Non renseignée</span>"|linebreaks }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date d'inscription</th>
+                            <td>{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Dernière connexion</th>
+                            <td>{{ user.last_login|date:"d/m/Y H:i"|default:"Jamais" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

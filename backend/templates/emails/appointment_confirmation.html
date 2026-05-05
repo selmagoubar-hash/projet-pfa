@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="fr">
+<body>
+  <p>Bonjour {{ patient.first_name }},</p>
+  <p>Votre rendez-vous du {{ rendezvous.date_heure|date:"d/m/Y à H:i" }} avec Dr. {{ medecin.last_name }} est confirmé.</p>
+  <p>Cordialement,<br>Cabinet Médical</p>
+</body>
+</html>

@@ -1,0 +1,141 @@
+body {
+  background: #f6f8fb;
+  color: #1f2937;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 28px;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #eef3f7;
+}
+
+.auth-card {
+  width: min(100%, 420px);
+  padding: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(31, 41, 55, 0.08);
+}
+
+.auth-card-wide {
+  width: min(100%, 760px);
+}
+
+.auth-card h1,
+.page-title h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.page-section {
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.page-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.page-title p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.search-input {
+  max-width: 320px;
+}
+
+.content-panel,
+.metric-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 28px rgba(31, 41, 55, 0.04);
+}
+
+.content-panel h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.chart-panel canvas {
+  max-height: 320px;
+}
+
+.metric-card {
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.metric-card span {
+  color: #6b7280;
+}
+
+.metric-card strong {
+  font-size: 2rem;
+}
+
+.compact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.compact-row:last-child {
+  border-bottom: 0;
+}
+
+.compact-row span {
+  color: #6b7280;
+}
+
+.page-center {
+  min-height: 50vh;
+  display: grid;
+  place-items: center;
+}
+
+.nav-link.active {
+  color: #0d6efd !important;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    padding: 18px;
+  }
+
+  .page-title {
+    display: block;
+  }
+
+  .search-input {
+    margin-top: 12px;
+    max-width: 100%;
+  }
+}

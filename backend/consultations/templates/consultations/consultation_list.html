@@ -1,0 +1,105 @@
+<!-- consultations/templates/consultations/consultation_list.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Liste des consultations{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-stethoscope me-2"></i>Consultations</h1>
+        {% if user.role != 'patient' %}
+            <a href="{% url 'consultations:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Nouvelle consultation
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Rechercher par patient ou diagnostic..." 
+                           value="{{ request.GET.search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des consultations -->
+    <div class="card shadow">
+        <div class="card-body">
+            {% if consultations %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Patient</th>
+                                <th>Médecin</th>
+                                <th>Diagnostic</th>
+                                <th>Signes vitaux</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for consultation in consultations %}
+                            <tr>
+                                <td>{{ consultation.date|date:"d/m/Y H:i" }}</td>
+                                <td>{{ consultation.patient }}</td>
+                                <td>Dr. {{ consultation.medecin.last_name }}</td>
+                                <td>{{ consultation.diagnostic|truncatechars:50 }}</td>
+                                <td>
+                                    {% if consultation.tension_arterielle %}TA: {{ consultation.tension_arterielle }}<br>{% endif %}
+                                    {% if consultation.poids %}Poids: {{ consultation.poids }}kg{% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'consultations:detail' consultation.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if user.role == 'medecin' or user.role == 'admin' %}
+                                        <a href="{% url 'consultations:update' consultation.id %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if user.role == 'admin' %}
+                                        <a href="{% url 'consultations:delete' consultation.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; Première</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédente</a></li>
+                        {% endif %}
+                        <li class="page-item active"><span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivante</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Dernière &raquo;</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <p class="text-muted text-center mb-0">Aucune consultation trouvée.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

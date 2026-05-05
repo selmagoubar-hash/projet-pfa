@@ -1,0 +1,136 @@
+<!-- consultations/templates/consultations/consultation_detail.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Consultation du {{ consultation.date|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-stethoscope me-2 text-primary"></i>
+            Consultation médicale
+        </h1>
+        <div>
+            {% if not consultation.ordonnance %}
+            <a href="{% url 'consultations:ordonnance_create' consultation.id %}" class="btn btn-success">
+                <i class="fas fa-prescription-bottle me-2"></i>Rédiger ordonnance
+            </a>
+            {% endif %}
+            <a href="{% url 'consultations:update' consultation.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="#" onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Infos consultation -->
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Détails de la consultation</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <tr><th>Date</th><td>{{ consultation.date|date:"d/m/Y H:i" }}</td></tr>
+                        <tr><th>Patient</th><td>{{ consultation.patient }}</td></tr>
+                        <tr><th>Médecin</th><td>Dr. {{ consultation.medecin.last_name }}</td></tr>
+                        <tr><th>Motif</th><td>{{ consultation.rendezvous.motif|default:"-" }}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signes vitaux -->
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Signes vitaux</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Tension</small>
+                                <h5 class="mb-0">{{ consultation.tension_arterielle|default:"-" }}</h5>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Poids</small>
+                                <h5 class="mb-0">{{ consultation.poids|default:"-" }} kg</h5>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <small class="text-muted">Température</small>
+                                <h5 class="mb-0">{{ consultation.temperature|default:"-" }} °C</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnostic et notes -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-diagnoses me-2"></i>Diagnostic</h5>
+                </div>
+                <div class="card-body">
+                    {{ consultation.diagnostic|linebreaks }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-notes-medical me-2"></i>Notes cliniques</h5>
+                </div>
+                <div class="card-body">
+                    {{ consultation.notes|default:"Aucune note"|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ordonnance -->
+    {% if consultation.ordonnance %}
+    <div class="card shadow">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="fas fa-prescription-bottle me-2"></i>Ordonnance</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Date :</strong> {{ consultation.ordonnance.date|date:"d/m/Y" }}</p>
+            <p><strong>Durée du traitement :</strong> {{ consultation.ordonnance.duree_traitement|default:"-" }}</p>
+            
+            <h6>Médicaments prescrits :</h6>
+            <table class="table table-sm">
+                <thead><tr><th>Médicament</th><th>Posologie</th><th>Durée</th><th>Quantité</th></tr></thead>
+                <tbody>
+                    {% for ligne in consultation.ordonnance.lignes.all %}
+                    <tr>
+                        <td>{{ ligne.medicament.nom }}</td>
+                        <td>{{ ligne.posologie }}</td>
+                        <td>{{ ligne.duree|default:"-" }}</td>
+                        <td>{{ ligne.quantite }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <p><strong>Recommandations :</strong> {{ consultation.ordonnance.recommandations|default:"-" }}</p>
+            
+            <a href="#" class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Imprimer l'ordonnance
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,10 +1,10 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q
-from .models import Consultation, Ordonnance, Medicament, LigneOrdonnance
+from .models import Consultation, Ordonnance, LigneOrdonnance
 from .forms import ConsultationForm, OrdonnanceForm, LigneOrdonnanceForm
 from appointments.models import RendezVous
 
@@ -24,9 +24,9 @@ class ConsultationListView(LoginRequiredMixin, ListView):
         if user.role == 'medecin':
             queryset = queryset.filter(medecin=user)
         elif user.role == 'patient':
-            try:
-                queryset = queryset.filter(patient__user=user)
-            except:
+            if hasattr(user, 'patient_profile'):
+                queryset = queryset.filter(patient=user.patient_profile)
+            else:
                 queryset = queryset.none()
         
         # Recherche
