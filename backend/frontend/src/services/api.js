@@ -6,6 +6,7 @@ const API = axios.create({
     headers: { 'Content-Type': 'application/json' }
 });
 
+// Fonction pour définir le token
 export function setAuthToken(token) {
   if (token) {
     API.defaults.headers.common.Authorization = `Token ${token}`;
@@ -14,20 +15,29 @@ export function setAuthToken(token) {
   }
 }
 
-setAuthToken(localStorage.getItem('access_token'));
+// Initialiser le token depuis localStorage
+const token = localStorage.getItem('access_token');
+if (token) {
+  setAuthToken(token);
+}
 
+// Intercepteur pour ajouter le token à chaque requête
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
-  if (token) config.headers.Authorization = `Token ${token}`;
+  if (token) {
+    config.headers.Authorization = `Token ${token}`;
+  }
   return config;
 });
 
+// Intercepteur pour gérer les erreurs 401
 API.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -57,6 +67,8 @@ export const patientService = {
   delete: (id) => API.delete(`patients/${id}/`),
 };
 
+// Ajoutez ou vérifiez ces fonctions dans api.js
+
 export const appointmentService = {
   getAll: () => API.get('rendez-vous/'),
   calendar: () => API.get('rendez-vous/calendar/'),
@@ -65,8 +77,14 @@ export const appointmentService = {
   delete: (id) => API.delete(`rendez-vous/${id}/`),
   confirm: (id) => API.post(`rendez-vous/${id}/confirm/`),
   cancel: (id) => API.post(`rendez-vous/${id}/cancel/`),
-  getAvailableSlots: (params) => API.get('rendez-vous/available-slots/', { params }),
-  autoSchedule: (data) => API.post('rendez-vous/auto-schedule/', data),
+  getAvailableSlots: (params) => {
+    console.log('Appel API getAvailableSlots avec:', params);
+    return API.get('rendez-vous/available-slots/', { params });
+  },
+  autoSchedule: (data) => {
+    console.log('Appel API autoSchedule avec:', data);
+    return API.post('rendez-vous/auto-schedule/', data);
+  },
 };
 
 export const userService = {
