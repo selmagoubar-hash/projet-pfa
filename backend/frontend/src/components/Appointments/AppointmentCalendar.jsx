@@ -8,97 +8,321 @@ function AppointmentCalendar() {
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [form, setForm] = useState({ patient: '', medecin: '', date_heure: '', motif: '', statut: 'planifie' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  
+  const [form, setForm] = useState({
+    patient: '',
+    medecin: '',
+    date_heure: '',
+    motif: '',
+    statut: 'planifie'
+  });
 
-  const load = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
       const [rdvRes, patientRes, doctorRes] = await Promise.all([
         appointmentService.getAll(),
         patientService.getAll(),
-        userService.getAll({ role: 'medecin' }),
+        userService.getAll({ role: 'medecin' })
       ]);
-      setAppointments(rdvRes.data.results || rdvRes.data);
-      setPatients(patientRes.data.results || patientRes.data);
-      setDoctors(doctorRes.data.results || doctorRes.data);
-    } catch {
-      setError('Impossible de charger les rendez-vous.');
+      setAppointments(rdvRes.data.results || rdvRes.data || []);
+      setPatients(patientRes.data.results || patientRes.data || []);
+      setDoctors(doctorRes.data.results || doctorRes.data || []);
+      setError('');
+    } catch (err) {
+      setError('Impossible de charger les données');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadData(); }, []);
 
-  const submit = async (event) => {
-    event.preventDefault();
+  const resetForm = () => {
+    setForm({ patient: '', medecin: '', date_heure: '', motif: '', statut: 'planifie' });
+    setEditingAppointment(null);
+    setShowForm(false);
+  };
+
+  const handleEdit = (appointment) => {
+    setEditingAppointment(appointment);
+    setForm({
+      patient: appointment.patient,
+      medecin: appointment.medecin,
+      date_heure: appointment.date_heure.slice(0, 16),
+      motif: appointment.motif || '',
+      statut: appointment.statut
+    });
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setError('');
+    setSuccess('');
+    
     try {
-      await appointmentService.create(form);
-      setForm({ patient: '', medecin: '', date_heure: '', motif: '', statut: 'planifie' });
-      load();
-    } catch {
-      setError('Création du rendez-vous impossible.');
+      if (editingAppointment) {
+        await appointmentService.update(editingAppointment.id, form);
+        setSuccess('Rendez-vous modifié avec succès !');
+      } else {
+        await appointmentService.create(form);
+        setSuccess('Rendez-vous créé avec succès !');
+      }
+      resetForm();
+      await loadData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Opération impossible');
     }
   };
 
-  const update = (field, value) => setForm((current) => ({ ...current, [field]: value }));
+  const handleDelete = async (id, patientName) => {
+    if (window.confirm(`Supprimer le rendez-vous de ${patientName} ?`)) {
+      try {
+        await appointmentService.delete(id);
+        setSuccess('Rendez-vous supprimé !');
+        await loadData();
+        setTimeout(() => setSuccess(''), 3000);
+      } catch (err) {
+        setError('Erreur lors de la suppression');
+      }
+    }
+  };
+
+  const handleConfirm = async (id) => {
+    try {
+      await appointmentService.confirm(id);
+      setSuccess('Rendez-vous confirmé !');
+      await loadData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError('Erreur lors de la confirmation');
+    }
+  };
+
+  const handleCancel = async (id) => {
+    if (window.confirm('Annuler ce rendez-vous ?')) {
+      try {
+        await appointmentService.cancel(id);
+        setSuccess('Rendez-vous annulé !');
+        await loadData();
+        setTimeout(() => setSuccess(''), 3000);
+      } catch (err) {
+        setError('Erreur lors de l\'annulation');
+      }
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      'planifie': 'bg-primary',
+      'termine': 'bg-success',
+      'annule': 'bg-danger'
+    };
+    return `badge ${badges[status] || 'bg-secondary'}`;
+  };
+
+  const getStatusText = (status) => {
+    const texts = {
+      'planifie': 'Planifié',
+      'termine': 'Terminé',
+      'annule': 'Annulé'
+    };
+    return texts[status] || status;
+  };
 
   return (
     <section className="page-section">
       <div className="page-title">
         <div>
-          <h1>Rendez-vous</h1>
-          <p>Planifier, confirmer et annuler les rendez-vous.</p>
+          <h1>📅 Rendez-vous</h1>
+          <p>Planifier, confirmer et annuler les rendez-vous</p>
         </div>
+        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+          {showForm ? '✖ Fermer' : '+ Nouveau rendez-vous'}
+        </button>
       </div>
+
       <Alert type="danger" message={error} />
-      <div className="row g-3">
-        <div className="col-xl-8">
-          <div className="content-panel">
-            <h2>Agenda</h2>
-            {loading ? <Loader /> : (
-              <div className="table-responsive">
-                <table className="table table-hover align-middle">
-                  <thead><tr><th>Date</th><th>Patient</th><th>Médecin</th><th>Motif</th><th>Statut</th><th></th></tr></thead>
-                  <tbody>
-                    {appointments.map((item) => (
-                      <tr key={item.id}>
-                        <td>{new Date(item.date_heure).toLocaleString('fr-FR')}</td>
-                        <td>{item.patient_nom}</td>
-                        <td>{item.medecin_nom}</td>
-                        <td>{item.motif || '-'}</td>
-                        <td><span className="badge text-bg-light border">{item.statut}</span></td>
-                        <td className="text-end">
-                          <button className="btn btn-sm btn-outline-success me-2" onClick={() => appointmentService.confirm(item.id).then(load)} type="button">Confirmer</button>
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => appointmentService.cancel(item.id).then(load)} type="button">Annuler</button>
-                        </td>
-                      </tr>
+      <Alert type="success" message={success} />
+
+      {showForm && (
+        <div className="card shadow mb-4">
+          <div className="card-header bg-primary text-white">
+            <h5 className="mb-0">{editingAppointment ? '✏️ Modifier' : '➕ Créer'} un rendez-vous</h5>
+          </div>
+          <div className="card-body">
+            <form onSubmit={handleSubmit}>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Patient *</label>
+                  <select
+                    className="form-select"
+                    value={form.patient}
+                    onChange={(e) => setForm({ ...form, patient: e.target.value })}
+                    required
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {patients.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.nom_complet || `${p.first_name} ${p.last_name}`}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Médecin *</label>
+                  <select
+                    className="form-select"
+                    value={form.medecin}
+                    onChange={(e) => setForm({ ...form, medecin: e.target.value })}
+                    required
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {doctors.map(d => (
+                      <option key={d.id} value={d.id}>
+                        Dr. {d.nom_complet || d.username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            )}
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Date et heure *</label>
+                  <input
+                    type="datetime-local"
+                    className="form-control"
+                    value={form.date_heure}
+                    onChange={(e) => setForm({ ...form, date_heure: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Statut</label>
+                  <select
+                    className="form-select"
+                    value={form.statut}
+                    onChange={(e) => setForm({ ...form, statut: e.target.value })}
+                  >
+                    <option value="planifie">Planifié</option>
+                    <option value="termine">Terminé</option>
+                    <option value="annule">Annulé</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Motif</label>
+                <textarea
+                  className="form-control"
+                  rows="2"
+                  placeholder="Motif de la consultation..."
+                  value={form.motif}
+                  onChange={(e) => setForm({ ...form, motif: e.target.value })}
+                />
+              </div>
+              <div className="d-flex gap-2">
+                <button type="submit" className="btn btn-primary">
+                  {editingAppointment ? '💾 Enregistrer' : '➕ Créer'}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                  Annuler
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        <div className="col-xl-4">
-          <AutoSchedule onScheduled={load} />
-          <form className="content-panel mt-3" onSubmit={submit}>
-            <h2>Nouveau rendez-vous</h2>
-            <select className="form-select mb-3" value={form.patient} onChange={(e) => update('patient', e.target.value)} required>
-              <option value="">Patient</option>
-              {patients.map((patient) => <option key={patient.id} value={patient.id}>{patient.nom_complet || `${patient.first_name} ${patient.last_name}`}</option>)}
-            </select>
-            <select className="form-select mb-3" value={form.medecin} onChange={(e) => update('medecin', e.target.value)} required>
-              <option value="">Médecin</option>
-              {doctors.map((doctor) => <option key={doctor.id} value={doctor.id}>Dr. {doctor.nom_complet || doctor.username}</option>)}
-            </select>
-            <input className="form-control mb-3" type="datetime-local" value={form.date_heure} onChange={(e) => update('date_heure', e.target.value)} required />
-            <textarea className="form-control mb-3" placeholder="Motif" value={form.motif} onChange={(e) => update('motif', e.target.value)} />
-            <button className="btn btn-primary w-100" type="submit">Planifier</button>
-          </form>
+      )}
+
+      <div className="row">
+        <div className="col-lg-8">
+          <div className="card shadow">
+            <div className="card-header bg-primary text-white">
+              <h5 className="mb-0">📋 Liste des rendez-vous</h5>
+            </div>
+            <div className="card-body">
+              {loading ? (
+                <Loader />
+              ) : appointments.length === 0 ? (
+                <p className="text-muted text-center">Aucun rendez-vous</p>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Patient</th>
+                        <th>Médecin</th>
+                        <th>Date & heure</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {appointments.map((item) => (
+                        <tr key={item.id}>
+                          <td>
+                            <strong>{item.patient_nom || item.patient}</strong>
+                          </td>
+                          <td>{item.medecin_nom || item.medecin}</td>
+                          <td>{new Date(item.date_heure).toLocaleString('fr-FR')}</td>
+                          <td>{item.motif || '-'}</td>
+                          <td>
+                            <span className={getStatusBadge(item.statut)}>
+                              {getStatusText(item.statut)}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="btn-group btn-group-sm">
+                              <button
+                                className="btn btn-outline-warning"
+                                onClick={() => handleEdit(item)}
+                                title="Modifier"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="btn btn-outline-success"
+                                onClick={() => handleConfirm(item.id)}
+                                disabled={item.statut !== 'planifie'}
+                                title="Confirmer"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                className="btn btn-outline-danger"
+                                onClick={() => handleCancel(item.id)}
+                                disabled={item.statut === 'annule'}
+                                title="Annuler"
+                              >
+                                ✗
+                              </button>
+                              <button
+                                className="btn btn-outline-secondary"
+                                onClick={() => handleDelete(item.id, item.patient_nom)}
+                                title="Supprimer"
+                              >
+                                🗑
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-4">
+          <AutoSchedule onScheduled={loadData} />
         </div>
       </div>
     </section>
